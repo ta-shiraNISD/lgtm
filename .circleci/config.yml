@@ -1,37 +1,31 @@
 version: 2.1
 
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/guides/orchestrate/jobs-steps/#jobs-overview & https://circleci.com/docs/reference/configuration-reference/#jobs
 jobs:
-  setup_dependencies:
-    docker:
-      - image:  cimg/python:3.8
-    steps:
-      - checkout
-      - restore_cache:
-          key: deps-{{ checksum "requirements.lock" }}
-      - run:
-          command: |
-            pip install --user -r requirements.lock
-      - save_cache:
-          key: deps-{{ checksum "requirements.lock" }}
-          paths:
-            - "~/.local"
   test:
     docker:
-      - image:  cimg/python:3.8
+      - image: cimg/python:3.8
+
     steps:
       - checkout
+
       - restore_cache:
-          key: deps-{{ checksum "requirements.lock" }}
+          key: deps-{{ checksum "requirements.txt" }}
+
       - run:
           command: |
-            python -m unittest-v
+            pip install -r requirements.txt
+
+      - save_cache:
+          key: deps-{{ checksum "requirements.txt" }}
+          paths:
+            - ~/.cache/pip
+
+      - run:
+          command: |
+            python -m unittest discover -s tests -v
+
 workflows:
   version: 2
   all:
     jobs:
-      - setup_dependencies
-      - test:
-          requires:
-            - setup_dependencies
+      - test
